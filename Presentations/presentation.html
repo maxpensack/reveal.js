@@ -1,16 +1,16 @@
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="utf-8">
     <title>Max Pensack - Lab Meeting 04/26/21</title>
     <link rel="stylesheet" href="../dist/reveal.css">
     <link rel="stylesheet" href="../dist/theme/black.css" id="theme">
     <link rel="stylesheet" href="../plugin/highlight/monokai.css">
-  </head>
+</head>
 
-  <body>
+<body>
     <div class="reveal">
-      <div class="slides">
+      	<div class="slides">
                 <!-- Slides are separated by newline + three dashes + newline, vertical slides identical but two dashes -->
                 <section data-markdown data-separator="^\n---\n$" data-separator-vertical="^\n--\n$" data-separator-notes="^Note:" >
                     <script type="text/template">
@@ -24,33 +24,32 @@
                         #### Geometry, representations, ACC, oh my!
                         <img src="paper_title.png" class="r-stretch">
 
+                        --
+
+                        But...
+
+                        <p class="fragment">"Our analyses were focused on single-neuron activity, demonstrating that we can track dynamics of representations even at the single-cell level."</p>
+
                         ---
 
-                        ## Background
-                        - One
-                        - Two
-                        - Three
+                        ## Background: Task
+                        - rule-based, multi-cue stimuli classification
 
                         --
 
-                        ## 1
-                        `$$ J(\theta_0,\theta_1) = \sum_{i=0} $$`
-                        `$$ \begin{aligned}
-                            \dot{x} &= \sigma(y-x) \\
-                            \dot{y} &= \rho x - y - xz \\
-                            \dot{z} &= -\beta z + xy
-                            \end{aligned} $$`
+                        Authors told similar story in humans, with special focus on differences in learning across individuals (Cohen and Schneidman, 2013)
 
-                        --
+                        <img src="cs2013.png" class="r-stretch">
 
-                        ## 2
+                        ---
 
-                        Note: 
-                        Bla bla bla, important sounding crap.
-
-                        --
-
-                        ## 3
+                        ## Background: Brain Areas
+                        - Dorsal anterior cingulate cortex (dACC):
+                            - Learning, attention, executive control, conflict monitoring
+                        - Striatum:
+                            - BG > Striatum (dorsal) > Caudate & Putamen
+                            - Motor control, RL, and (recently) executive fuctions
+                            - Learning related changes may precede those in DLPFC (Pasupathy and Miller, 2005)
 
                         ---
 
@@ -76,6 +75,11 @@
 
                         ## Rule "Performance"
                         <img src="f2e.jpg" class="r-stretch">
+
+                        --
+
+                        ## Naive "Learn One" Model
+                        `$$ \left(\frac{1}{8} \times 1.0\right) + \left(\frac{7}{8} \times 0.5\right) = 56.25\% $$`
 
                         --
 
@@ -148,7 +152,7 @@
 
                         ---
 
-                        ## Constructing rule vectors
+                        #### Constructing rule (feature) vectors
                         <img src="f4a.jpg" class="r-stretch">
                         <p class="fragment">"...we represented each stimulus pattern using a complete set of statistically independent binary features..."</p>
 
@@ -180,26 +184,29 @@
                         ---
 
                         ### Single-neuron representations at end of session predict next-day performance
+
                         <img src="f7.jpg" class="r-stretch">
+
+                        <br>
+                        Change Rule vs No-Change
 
                         ---
 
                         ## Summary
-                        - One
-                        - Two
-                        - Three
+                        - A geometrical framework reveals single-neuron dynamics during de novo rule learning
+                        - Neurons in the dACC reflect search for the new rule-based behavioral policy
+                        - Neurons in the putamen also reflect confidence increase that follows the policy search
+                        - The neural representation predicts overnight retention and generalization of rules
                     </script>
                 </section>
-
-            </div>
+    	</div>
     </div>
 
-    <script src="../dist/reveal.js"></script>
-        <script src="../plugin/markdown/markdown.js"></script>
-        <script src="../plugin/highlight/highlight.js"></script>
-        <script src="../plugin/notes/notes.js"></script>
-        <script src="../plugin/math/math.js"></script>
-
+	<script src="../dist/reveal.js"></script>
+    <script src="../plugin/markdown/markdown.js"></script>
+    <script src="../plugin/highlight/highlight.js"></script>
+    <script src="../plugin/notes/notes.js"></script>
+    <script src="../plugin/math/math.js"></script>
     <script>
 
       Reveal.initialize({
@@ -214,8 +221,7 @@
       });
 
     </script>
-
-  </body>
+</body>
 </html>
 
 <style>
