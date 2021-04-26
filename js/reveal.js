@@ -26,7 +26,7 @@ import {
 } from './utils/constants.js'
 
 // The reveal.js version
-export const VERSION = '4.0.0';
+export const VERSION = '4.1.0';
 
 /**
  * reveal.js
@@ -47,7 +47,7 @@ export default function( revealElement, options ) {
 	const Reveal = {};
 
 	// Configuration defaults, can be overridden at initialization time
-	let config,
+	let config = {},
 
 		// Flags if reveal.js is loaded (has dispatched the 'ready' event)
 		ready = false,
@@ -125,8 +125,14 @@ export default function( revealElement, options ) {
 		dom.wrapper = revealElement;
 		dom.slides = revealElement.querySelector( '.slides' );
 
-		// Compose our config object
-		config = { ...defaultConfig, ...options, ...initOptions, ...Util.getQueryHash() };
+		// Compose our config object in order of increasing precedence:
+		// 1. Default reveal.js options
+		// 2. Options provided via Reveal.configure() prior to
+		//    initialization
+		// 3. Options passed to the Reveal constructor
+		// 4. Options passed to Reveal.initialize
+		// 5. Query params
+		config = { ...defaultConfig, ...config, ...options, ...initOptions, ...Util.getQueryHash() };
 
 		setViewport();
 
@@ -148,7 +154,7 @@ export default function( revealElement, options ) {
 
 		// Embedded decks use the reveal element as their viewport
 		if( config.embedded === true ) {
-			dom.viewport = revealElement.closest( '.reveal-viewport' ) || revealElement;
+			dom.viewport = Util.closest( revealElement, '.reveal-viewport' ) || revealElement;
 		}
 		// Full-page decks use the body as their viewport
 		else {
@@ -167,6 +173,9 @@ export default function( revealElement, options ) {
 	function start() {
 
 		ready = true;
+
+		// Remove slides hidden with data-visibility
+		removeHiddenSlides();
 
 		// Make sure we've got all the DOM elements we need
 		setupDOM();
@@ -221,6 +230,24 @@ export default function( revealElement, options ) {
 					print.setupPDF();
 				} );
 			}
+		}
+
+	}
+
+	/**
+	 * Removes all slides with data-visibility="hidden". This
+	 * is done right before the rest of the presentation is
+	 * initialized.
+	 *
+	 * If you want to show all hidden slides, initialize
+	 * reveal.js with showHiddenSlides set to true.
+	 */
+	function removeHiddenSlides() {
+
+		if( !config.showHiddenSlides ) {
+			Util.queryAll( dom.wrapper, 'section[data-visibility="hidden"]' ).forEach( slide => {
+				slide.parentNode.removeChild( slide );
+			} );
 		}
 
 	}
@@ -414,6 +441,10 @@ export default function( revealElement, options ) {
 
 		dom.wrapper.setAttribute( 'data-transition-speed', config.transitionSpeed );
 		dom.wrapper.setAttribute( 'data-background-transition', config.backgroundTransition );
+
+		// Expose our configured slide dimensions as custom props
+		dom.viewport.style.setProperty( '--slide-width', config.width + 'px' );
+		dom.viewport.style.setProperty( '--slide-height', config.height + 'px' );
 
 		if( config.shuffle ) {
 			shuffle();
@@ -1436,13 +1467,23 @@ export default function( revealElement, options ) {
 	/**
 	 * Randomly shuffles all slides in the deck.
 	 */
-	function shuffle() {
+	function shuffle( slides = getHorizontalSlides() ) {
 
-		getHorizontalSlides().forEach( ( slide, i, slides ) => {
+		slides.forEach( ( slide, i ) => {
 
-			// Insert this slide next to another random slide. This may
-			// cause the slide to insert before itself but that's fine.
-			dom.slides.insertBefore( slide, slides[ Math.floor( Math.random() * slides.length ) ] );
+			// Insert the slide next to a randomly picked sibling slide
+			// slide. This may cause the slide to insert before itself,
+			// but that's not an issue.
+			let beforeSlide = slides[ Math.floor( Math.random() * slides.length ) ];
+			if( beforeSlide.parentNode === slide.parentNode ) {
+				slide.parentNode.insertBefore( slide, beforeSlide );
+			}
+
+			// Randomize the order of vertical slides (if there are any)
+			let verticalSlides = slide.querySelectorAll( 'section' );
+			if( verticalSlides.length ) {
+				shuffle( verticalSlides );
+			}
 
 		} );
 
@@ -1489,7 +1530,10 @@ export default function( revealElement, options ) {
 
 				let reverse = config.rtl && !isVerticalSlide( element );
 
-				element.classList.remove( 'past', 'present', 'future' );
+				// Avoid .remove() with multiple args for IE11 support
+				element.classList.remove( 'past' );
+				element.classList.remove( 'present' );
+				element.classList.remove( 'future' );
 
 				// http://www.w3.org/html/wg/drafts/html/master/editing.html#the-hidden-attribute
 				element.setAttribute( 'hidden', '' );
@@ -1759,7 +1803,7 @@ export default function( revealElement, options ) {
 
 			// Don't count the wrapping section for vertical slides and
 			// slides marked as uncounted
-			if( horizontalSlide.classList.contains( 'stack' ) === false && !horizontalSlide.dataset.visibility !== 'uncounted' ) {
+			if( horizontalSlide.classList.contains( 'stack' ) === false && horizontalSlide.dataset.visibility !== 'uncounted' ) {
 				pastCount++;
 			}
 
@@ -2064,21 +2108,21 @@ export default function( revealElement, options ) {
 			}
 			else {
 				autoSlide = config.autoSlide;
-			}
 
-			// If there are media elements with data-autoplay,
-			// automatically set the autoSlide duration to the
-			// length of that media. Not applicable if the slide
-			// is divided up into fragments.
-			// playbackRate is accounted for in the duration.
-			if( currentSlide.querySelectorAll( '.fragment' ).length === 0 ) {
-				Util.queryAll( currentSlide, 'video, audio' ).forEach( el => {
-					if( el.hasAttribute( 'data-autoplay' ) ) {
-						if( autoSlide && (el.duration * 1000 / el.playbackRate ) > autoSlide ) {
-							autoSlide = ( el.duration * 1000 / el.playbackRate ) + 1000;
+				// If there are media elements with data-autoplay,
+				// automatically set the autoSlide duration to the
+				// length of that media. Not applicable if the slide
+				// is divided up into fragments.
+				// playbackRate is accounted for in the duration.
+				if( currentSlide.querySelectorAll( '.fragment' ).length === 0 ) {
+					Util.queryAll( currentSlide, 'video, audio' ).forEach( el => {
+						if( el.hasAttribute( 'data-autoplay' ) ) {
+							if( autoSlide && (el.duration * 1000 / el.playbackRate ) > autoSlide ) {
+								autoSlide = ( el.duration * 1000 / el.playbackRate ) + 1000;
+							}
 						}
-					}
-				} );
+					} );
+				}
 			}
 
 			// Cue the next auto-slide if:
